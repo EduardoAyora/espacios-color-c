@@ -42,33 +42,17 @@ Mat binaria;
 Mat hsv;
 Mat efecto;
 
-int mT = 0;
+int niveles = 0;
 int pixel;
 int nivel = 0, hefe = 0;
 
 int nNiveles(int pixel)
 {
-  if (mT == 0 && pixel >= 0 && pixel <= 25)
-    return 0;
-  if (mT == 1 && pixel >= 26 && pixel <= 50)
-    return 25;
-  if (mT == 2 && pixel >= 51 && pixel <= 75)
-    return 50;
-  if (mT == 3 && pixel >= 76 && pixel <= 100)
-    return 75;
-  if (mT == 4 && pixel >= 101 && pixel <= 125)
-    return 100;
-  if (mT == 5 && pixel >= 126 && pixel <= 150)
-    return 125;
-  if (mT == 6 && pixel >= 151 && pixel <= 175)
-    return 150;
-  if (mT == 7 && pixel >= 176 && pixel <= 200)
-    return 175;
-  if (mT == 8 && pixel >= 201 && pixel <= 225)
-    return 200;
-  if (mT == 9 && pixel >= 226 && pixel <= 255)
-    return 225;
-  return pixel;
+  if (niveles == 0) return 0;
+  double rango_niveles = 256 / niveles;
+  int numero_nivel = (int) pixel / rango_niveles;
+  int rango_inferior = numero_nivel * rango_niveles;
+  return rango_inferior;
 }
 
 void eventoTrack(int v, void *data)
@@ -87,7 +71,7 @@ int main(int argc, char *argv[])
   namedWindow("Efecto", WINDOW_AUTOSIZE);
   namedWindow("Imagen Niveles Gris", WINDOW_AUTOSIZE);
 
-  createTrackbar("Nivel gris", "Video", &mT, 9, eventoTrack, NULL);
+  createTrackbar("Nivel gris", "Video", &niveles, 255, eventoTrack, NULL);
   createTrackbar("Efecto", "Video", &hefe, 4, eventoTrack, NULL);
 
   while (true)
