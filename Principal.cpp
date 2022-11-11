@@ -1,24 +1,50 @@
 #include <iostream>
 #include <cstdlib>
+
 #include <cstring>
 #include <vector>
 #include <cmath>
 #include <sstream>
 #include <random>
+
+// Librerías de OpenCV
+// Librería que contiene las definiciones de las estructuras básicas
+// para representar imágenes a través de Matrices y sus operaciones
 #include <opencv2/core/core.hpp>
+
+// Librería para preprocesamiento y manipulación de imágenes
 #include <opencv2/imgproc/imgproc.hpp>
+
+// Librería para creación de ventanas y manejo de GUI
 #include <opencv2/highgui/highgui.hpp>
+
+// Librería para manejar los códecs de los diferentes formatos de imágenes
 #include <opencv2/imgcodecs/imgcodecs.hpp>
+
+// Librería para lectura de vídeo
 #include <opencv2/video/video.hpp>
+
+// Librería para escritura de vídeo
 #include <opencv2/videoio/videoio.hpp>
+
 #include <chrono>
 
+// Espacio de nombres de OpenCV
 using namespace cv;
-using namespace std;
+
+using namespace std; // Funciones propias de C++
+
+using namespace std::chrono;
+
+Mat frame;
+Mat gris;
+Mat binaria;
+Mat hsv;
+Mat efecto;
 
 int mT = 0;
-Mat imagen1;
-Mat imagenGris;
+int pixel;
+int nivel = 0, hefe = 0;
 
 int nNiveles(int pixel)
 {
@@ -47,37 +73,71 @@ int nNiveles(int pixel)
 
 void eventoTrack(int v, void *data)
 {
-  Mat imagenGrisNiveles = imagenGris.clone();
-  for (int i = 0; i < imagen1.rows; i++)
-  {
-    for (int j = 0; j < imagen1.cols; j++)
-    {
-      int pixel = imagenGrisNiveles.at<uchar>(i, j);
-      imagenGrisNiveles.at<uchar>(i, j) = nNiveles(pixel);
-    }
-  }
-  imshow("Imagen Niveles Gris", imagenGrisNiveles);
 }
 
 int main(int argc, char *argv[])
 {
-  imagen1 = imread("Plaza-Roja-Catedral-San-Basilio.jpg", IMREAD_COLOR);
-  resize(imagen1, imagen1, Size(), 0.55, 0.55);
 
-  cvtColor(imagen1, imagenGris, COLOR_BGR2GRAY);
+  VideoCapture video(0);
 
-  namedWindow("Imagen1 Original", WINDOW_AUTOSIZE);
-  namedWindow("Imagen Gris", WINDOW_AUTOSIZE);
+  if (!video.isOpened())
+    return 0;
+
+  namedWindow("Video", WINDOW_AUTOSIZE);
+  namedWindow("Efecto", WINDOW_AUTOSIZE);
   namedWindow("Imagen Niveles Gris", WINDOW_AUTOSIZE);
 
-  createTrackbar("Nivel Gris", "Imagen1 Original", &mT, 9, eventoTrack, NULL);
+  createTrackbar("Nivel gris", "Video", &mT, 9, eventoTrack, NULL);
+  createTrackbar("Efecto", "Video", &hefe, 4, eventoTrack, NULL);
 
-  imshow("Imagen1 Original", imagen1);
-  imshow("Imagen Gris", imagenGris);
-  imshow("Imagen Niveles Gris", imagenGris);
+  while (true)
+  {
+    video >> frame;
+    resize(frame, frame, Size(), 0.5, 0.5);
+    cvtColor(frame, gris, COLOR_BGR2GRAY);
 
-  waitKey(0);
+    // Parte 1
+    for (int i = 0; i < gris.rows; i++)
+    {
+      for (int j = 0; j < gris.cols; j++)
+      {
+        int pixel = gris.at<uchar>(i, j);
+        gris.at<uchar>(i, j) = nNiveles(pixel);
+      }
+    }
 
+    // Parte 2
+    if (hefe == 0)
+    {
+      cvtColor(frame, efecto, COLOR_BGR2Lab);
+      imwrite("imagenEfecto.jpg", efecto);
+    }
+    else if (hefe == 1)
+    {
+      cvtColor(frame, efecto, COLOR_BGR2YCrCb);
+      imwrite("imagenEfecto.jpg", efecto);
+    }
+    else if (hefe == 2)
+    {
+      cvtColor(frame, efecto, COLOR_BGR2HSV);
+      imwrite("imagenEfecto.jpg", efecto);
+    }
+    else if (hefe == 3)
+    {
+      cvtColor(frame, efecto, COLOR_BGR2GRAY);
+      imwrite("imagenEfecto.jpg", efecto);
+    }
+
+    cv::imshow("Video", frame);
+    cv::imshow("Efecto", efecto);
+    cv::imshow("Imagen Niveles Gris", gris);
+
+    if (waitKey(23) == 27)
+      break;
+  }
+
+  video.release();
   destroyAllWindows();
+
   return 0;
 }
